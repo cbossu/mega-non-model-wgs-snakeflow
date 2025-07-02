@@ -2,7 +2,8 @@ executor: cluster-generic
 cluster-generic-submit-cmd:
   mkdir -p results/slurm_logs/{rule} &&
   sbatch
-    --partition=amilan,csu
+    --partition=amilan,csu,amilan128c
+    --account=csu96_alpine1
     --cpus-per-task={threads}
     --mem={resources.mem_mb}
     --time={resources.time}
@@ -37,16 +38,16 @@ set-threads:
   genomics_db_import_chromosomes: 16
   genomics_db_import_scaffold_groups: 10
   genomics_db2vcf_scattered: 10
-  mark_duplicates: 30
-  make_gvcf_sections: 30
+  mark_duplicates: 100 # High number of pcr duplicates
+  make_gvcf_sections: 10 # I have gone as low as 3 before
   clip_overlaps: 24
-  
+
 set-resources:
   map_reads:
     mem_mb: 37400
     time: "'23:59:59'"
   make_gvcf_sections:
-    mem_mb: 112200
+    mem_mb: 37400
     time: "'23:59:59'"
   genomics_db_import_chromosomes:
     mem_mb: 59840
@@ -64,6 +65,6 @@ set-resources:
   realigner_target_creator:
     mem_mb: 14960
   mark_duplicates:
-    mem_mb: 112200
+    mem_mb: 204800
   clip_overlaps:
     mem_mb: 89760
