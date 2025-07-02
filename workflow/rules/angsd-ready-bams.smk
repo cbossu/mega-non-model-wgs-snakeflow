@@ -1,4 +1,3 @@
-
 # These are rules that take the mapped BAMs, and the results
 # of running GATK to get the indels, and do:
 #    1. Clipping over overlaps
@@ -27,7 +26,7 @@ rule clip_overlaps:
     benchmark:
         "results/bqsr-round-{bqsr_round}/benchmarks/clip_overlaps/{sample}.bmk"
     shell:
-        " bam clipOverlap --in {input} --out {output} --stats --poolSize 5000000 --poolSkipClip 2> {log.clip} && "
+        " bam clipOverlap --in {input} --out {output} --stats --poolSize 10000000 --poolSkipClip 2> {log.clip} && "
         " samtools index {output} 2> {log.index}"
 
 

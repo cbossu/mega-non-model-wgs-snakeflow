@@ -33,7 +33,9 @@ rule dest_scatter_intervals:
         scaffs=config["scaffold_groups"],
     params:
         binsize="{int_length}"
-    envmodules: "R/4.0.3"
+    #envmodules: "R/4.0.3"
+    #test see if this helps
+    conda: "snakemake-8.25.3"
     output:
         tsv="results/scatter_config/scatters_{int_length}.tsv"
     log:

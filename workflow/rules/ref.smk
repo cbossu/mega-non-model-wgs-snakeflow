@@ -46,9 +46,6 @@ rule genome_dict:
     shell:
         "samtools dict {input} > {output} 2> {log} "
 
-
-
-
 rule bwa_index:
     input:
         "resources/genome.fasta",
@@ -63,3 +60,27 @@ rule bwa_index:
     wrapper:
         "0.59.2/bio/bwa/index"
 
+#rule bwa_mem2_index:
+#    input:
+#        "resources/genome.fasta",
+#    output:
+#        #"resources/genome.0123",
+#        #"resources/genome.amb",
+#        #"resources/genome.ann",
+#        #"resources/genome.bwt.2bit.64",
+#        #"resources/genome.pac",
+#       #multiext("resources/genome.fasta", ".amb", ".ann", ".bwt.2bit.64", ".pac")
+#        "resources/genome.fasta.0123",
+#        "resources/genome.fasta.amb",
+#        "resources/genome.fasta.ann",
+#        "resources/genome.fasta.bwt.2bit.64",
+#        "resources/genome.fasta.pac",
+#    log:
+#        "logs/bwa-mem2_index/bwa_mem2_index.log",
+#    benchmark:
+#        "results/bqsr-round-0/benchmarks/bwa_mem2_index/bwa_mem2_index.bmk",
+#    resources:
+#        mem_mb=36900    
+#    wrapper:
+#        "v2.3.2/bio/bwa-mem2/index"
+        

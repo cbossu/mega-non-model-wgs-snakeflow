@@ -260,9 +260,10 @@ def get_bams_for_calling(wildcards):
             subd = subd,
             sample = wildcards.sample)}
 
+# holden modified this to calculate from rmdup, so that coverage is calculated for rmdup
 def get_bams_for_samtools_stats(wildcards):
     if wildcards.bqsr_round == "0":
-        subd = "mkdup"
+        subd = "rmdup"
     else:
         subd = "recal"
     return "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bam".format(

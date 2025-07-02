@@ -1,6 +1,5 @@
 
 
-
 rule get_genome_length:
     input:
         "resources/genome.fasta.fai"
@@ -35,6 +34,9 @@ rule get_ave_depths:
 # If the file is already below the downsampling depth this will merely
 # hard link the file to the new location.  I previously soft-linked relatively
 # but ln -sr is not available on Mac.  So I just hard link it!
+
+# holden: hard linking results in the same time stamp for inpouts and outputs
+# when coverage is < downsampling level. So I am changing the command to copy.
 rule thin_bam:
     input:
         bam="results/bqsr-round-{bqsr_round}/overlap_clipped/{sample}.bam",
@@ -53,8 +55,11 @@ rule thin_bam:
         " ( "
         " OPT=$(awk 'NR>1 && $1==\"{wildcards.sample}\" {{ wc = \"{wildcards.cov}\"; if(wc == \"FD\") {{print \"NOSAMPLE\"; exit}} fract = wc / $NF; if(fract < 1) print fract; else print \"NOSAMPLE\"; }}' {input.dps});  "
         " if [ $OPT = \"NOSAMPLE\" ]; then "
-        "     ln  {input.bam} {output.bam}; "
-        "     ln  {input.bai} {output.bai}; " 
+        #"     ln  {input.bam} {output.bam}; "
+        #"     ln  {input.bai} {output.bai}; " 
+        "      cp {input.bam} {output.bam}; "
+        "       cp {input.bai} {output.bai}; "
+        "       touch {output.bam} {output.bai}; "
         " else "
         "     samtools view --subsample $OPT --subsample-seed 1  -b {input.bam} > {output.bam}; "
         "     samtools index -o {output.bai} {output.bam}; "
