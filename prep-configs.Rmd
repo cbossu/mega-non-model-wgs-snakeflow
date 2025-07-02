@@ -151,6 +151,7 @@ Use whichever reference you'd like. I got a near chromosomal assembly from Amy, 
 ```sh
 sed '/^>/ s/[;=]/-/g' genome.fasta > genome.fasta.fix && mv genome.fasta.fix genome.fasta
 ```
+Now I am using the Bird 10K genome from ncbi, scaffolded with Amy's usng ragtag. The contig naming problem is the same though, so I run this line still.
 
 Now index the reference genome this way:
 ```sh
