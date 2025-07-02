@@ -1,0 +1,229 @@
+---
+title: "Prepping the config files for LOSH snakemake"
+author: "Holden"
+date: "2025-04-16"
+output: html_document
+---
+
+```{r setup, include=FALSE}
+knitr::opts_chunk$set(echo = TRUE)
+library(tidyverse)
+```
+
+Hello! Welcome to Holden's fork of Eriq's snakemake pipeline for processing whole genome seq data. This document will help you prep the config files for the pipeline.
+
+At the end of this tutorial, we will end up a config.yaml, units.tsv, chromosomes.tsv, scaffold_groups.tsv, and scatters.tsv. I'll provide examples of where I put my own files, but feel free to come up with your own directory structure.
+```sh
+/scratch/alpine/foxhol@colostate.edu/LOSH/mega-non-model-wgs-snakeflow/example-configs/LOSH-Apr-25/
+```
+
+Ok let's dive right in!
+
+# Make the units file
+
+## Parsing Fastq Metadata
+
+You will want to generate a detailed listing of all the fastq files in your project and key information about them. Run the following command from the top level of the mega-non-model directory.
+```sh
+ls -lR data/fastqs/*/*.gz > detailed-fastqs-info.txt
+```
+
+Let's use some code eriq wrote to extract key information about the files. We want paths, file names, their size, and the sample ID.
+```{r}
+setwd("/Users/holdenfox/Desktop/shrike-gen/snakemake-Apr25/prepare")
+
+files <- read_table("detailed-fastqs-info.txt", col_names = FALSE) %>%
+  # select the 9th column (file path) and 5th column (file size in bytes)
+  select(X9, X5) %>%
+  # convert file size from bytes to kilobytes
+  dplyr::mutate(kb = X5/1000) %>%
+  # rename the file path column to 'fq'
+  dplyr::rename(fq = X9) %>%
+  # keep only the file path and kilobyte size columns
+  dplyr::select(fq, kb) %>%
+  # extract just the filename from the full path
+  dplyr::mutate(base = basename(fq)) %>%
+  # extract sample_id based on common pattern like XXN##### (e.g., 22N13683, 24N11968)
+  dplyr::mutate(
+    sample_id = str_extract(base, "\\d{2}[A-Z]\\d{4,6}") # this pattern is specific for my sample ids. check and make sure this works
+  ) %>%
+  # extract read direction, works for both _R1_001.fastq.gz and _1.fq.gz formats
+  dplyr::mutate(
+    read = case_when(
+      str_detect(base, "_R[12]_") ~ str_match(base, "_R([12])_")[,2],
+      str_detect(base, "_[12]\\.fq\\.gz") ~ str_match(base, "_([12])\\.fq\\.gz")[,2],
+      TRUE ~ NA_character_
+    )
+  )
+
+# for the unknown sample names (i think remnants from the sequencer that don't matter), remove them.
+files <- files %>% filter(!is.na(sample_id))
+```
+## Extracting Sequencing Platform Metadata
+
+In some cases, fastq filenames may be incomplete or inconsistently named (e.g., missing the sequencing lane or machine ID). To retrieve more reliable metadata, specifically, the machine name, we can extract the first line (header) from each fastq and parse out this information. We do this by first running a shell loop that captures each fastq's first header line and writes the output to a tsv.
+
+```sh
+for i in data/*/*/*.gz; do zcat $i | awk -v f=$i 'BEGIN {OFS="\t"} NR==1 {print f, $1; exit}'; done | awk '!/Undetermined/' > example-configs/LOSH-Apr-25/prep/seq-tags-per-path.tsv
+```
+And we can extract flowcell and lane metadata form this file using R
+```{r}
+seq_ids <- read_tsv("seq-tags-per-path.tsv", col_names = c("fq", "id")) %>%
+  # split the header string by colon into machine, run, flowcell, and lane
+  separate(
+    id, 
+    into = c("x1", "x2", "flowcell", "lane"), 
+    sep = ":", 
+    extra = "drop"
+  ) %>%
+  # drop the first two components (machine name and run number)
+  select(-x1, -x2) %>%
+  # add a platform identifier for downstream clarity
+  mutate(platform = "ILLUMINA")
+```
+
+##Joining FASTQ Info with Flowcell and Lane Metadata
+
+Now that we've parsed the file paths, sample IDs, and read directions, and separately extracted flowcell and lane information from the fastq headers, we can join these datasets. 
+
+```{r}
+fastq_info <- left_join(files, seq_ids, by = "fq")
+```
+
+## Identify and Assign Sequencing Runs
+
+I am working with seq data from six different library preps, and assigning each sample to the corresponding run(s) using pattern matching. This is useful for tracking library preps across samples. For instance, I have some samples that were sequenced in two rounds with different preps. We want to track that.
+
+
+The naming conventions on these were horrible by the way. Here's a brief chronological history of the LOSH sequencing. In the first round of sequencing, birds from the East were sequenced on two lanes (1 & 2). A third run was done on wintering LOSH from South Texas. These all turned out to be resident birds. We aren't using this data at the moment. Alisa (a grad student in Canada had us sequence 40 some birds from Indiana at high depth (approaching 20x cov) on a fourth lane. Then we did 3 runs of birds from the West and Mexico, which were named LOSH_003, LOSH_004, and LOSH_005. In addition, some of the historic samples in LOSH_003 and LOSH_004 came out too low of coverage, so we re sequenced them in LOSH_005 with the addition of new historic samples that were seq'd twice. Ugh.
+
+We are using all runs but the TX winter birds. Let's name everything in order Lane 1, 2, 3, 4, 5, and 6. Where the Indiana birds are Lane 3.
+```{r}
+fastq_info <- fastq_info%>%
+  mutate(
+    library = case_when(
+      str_detect(fq, "LOSH_001") ~ "Lib-1",
+      str_detect(fq, "LOSH_002") ~ "Lib-2",
+      str_detect(fq, "LOSH_003") ~ "Lib-3",
+      str_detect(fq, "LOSH_004") ~ "Lib-4",
+      str_detect(fq, "LOSH_005") ~ "Lib-5",
+      str_detect(fq, "LOSH_006") ~ "Lib-6",
+      TRUE ~ NA_character_
+    ))
+
+```
+
+## Create Units Table
+
+Each row in the units file corresponds to a unique sequencing unit: a pair of FASTQ files (R1 and R2) for a single sample, from a specific library prep, lane, and flowcell. This step reshapes the data to wide format, assigning unit numbers to each sample, and ensures that all relevant metadata is preserved. It's a bit tricky to get this right. You need each repeated sample_id and corresponding fastq pair and metadata to be given a different unit. WHe
+
+```{r}
+units <- fastq_info %>%
+  select(-base) %>%
+  pivot_wider(
+    id_cols = c(sample_id, library, flowcell, lane, platform),
+    names_from = read,
+    values_from = c(fq, kb),
+    names_glue = "{.value}{read}",
+    values_fn = list  # repeated fastq pairs get collapsed into one row for a single id, if metadata is the same
+  ) %>%
+  unnest(c(fq1, fq2, kb1, kb2)) %>% # uncollapse paired information from these columns.
+  arrange(sample_id, fq1) %>%  # ensure sorting by sample_id and fq1
+  group_by(sample_id) %>% # for ea id
+  mutate(unit = row_number()) %>%  # assign units 1, 2, 3, etc
+  ungroup()
+```
+
+```{r}
+# the final units file woot woot
+units <- units %>% 
+  mutate(barcode = str_c(sample_id, library, unit, sep = "_")) %>% # create a unique barcode for each unit
+  mutate(sample = sample_id) %>% # make sample the same as sample_id, it is way easier
+  select(sample, unit, library, flowcell, platform, lane, sample_id, barcode, fq1, fq2, kb1, kb2) # reorder units file
+  
+
+#write_tsv(units, file = "units.tsv")
+```
+
+# Reference Genome
+
+Use whichever reference you'd like. I got a near chromosomal assembly from Amy, however, the chromosome and scaffold names contained = and ; characters, which breaks some of the processing programs. To fix, I convert these to dashes using:
+```sh
+sed '/^>/ s/[;=]/-/g' genome.fasta > genome.fasta.fix && mv genome.fasta.fix genome.fasta
+```
+
+Now index the reference genome this way:
+```sh
+samtools faidx resources/genome.fasta
+```
+# Chromosomes and scaffold groups
+
+We do this with R.  As always, it is important to look at the format
+in `.test/chromosomes.tsv` and `.test/scaffold_groups.tsv` to know the format.
+
+```{r}
+# Let anything over 30 Mb be a "chromosome" and then
+# we will shoot for scaffold groups < 50 Mb in total.
+fai <- read_tsv(
+  "genome.fasta.fai", col_names = c("chrom", "len", "x1", "x2", "x3")) %>%
+  select(-starts_with("x")) %>%
+  mutate(cumlen = cumsum(len))
+
+# here are the lengths:
+fai %>%
+  mutate(x = 1:n()) %>%
+  ggplot(aes(x=x, y = len)) + geom_col()
+
+fai
+```
+
+
+```{r}
+chromos <- fai %>%
+  filter(len >= 4e6) %>%
+  rename(num_bases = len) %>%
+  select(-cumlen)
+
+write_tsv(chromos, file = "chromosomes.tsv")
+
+# now, get the scaff groups
+scaffs <- fai %>%
+   filter(len < 4e6)
+
+# Calculate mean chromosome length
+mean_cl <- mean(chromos$num_bases)
+
+# Set a bin size for each scaffold group
+bin_length <- 30
+
+# Assign scaffolds to groups and label each group with an ID number
+scaff_groups <- scaffs %>%
+  mutate(id = sprintf("scaffold_group%03d", floor((row_number() - 1) / bin_length) + 1)) %>% 
+  select(id, everything()) #Move id before chrom
+
+# Summarize scaffold groups
+scaff_groups %>%
+  group_by(id) %>%
+  summarise(
+    num_bases = sum(len),
+    num_scaffolds = n())
+```
+
+Good, that is not too many scaffold groups, and also not too many scaffolds per any one group.
+```{r}
+write_tsv(scaff_groups, file = "scaffold_groups.tsv")
+```
+
+For subsequent addition of samples to this workflow, the chromosomes, and scaffold groups files can be reused.
+
+# Scatters
+
+After creating these files, put them in example-configs/LOSH-Apr-25/ example-configs/LOSH-Apr-25/
+
+Update the paths to them in config.yaml and set scatter_intervals_file: "",  then ran this command:
+```sh
+snakemake --cores 1 --use-conda results/scatter_config/scatters_50000000.tsv --configfile example-configs/LOSH-Apr-25/config.yaml
+```
+This step creates the file results/scatter_config/scatters_XXXXXXX.tsv, after it can be copied to the config directory and the path updated in config.yaml on this line: scatter_intervals_file: 
+
+
