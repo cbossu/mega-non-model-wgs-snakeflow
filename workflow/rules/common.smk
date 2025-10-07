@@ -242,9 +242,10 @@ def get_read_group(wildcards):
 # from bqsr_round-{bqsr-round}/mkdup. 
 # If the {bqsr_round} is > 0 it pulls them
 # from bqsr_round-{bqsr-round}/recal.
+# If downsampling is necessary, change subd to downsample-4.0X/overlap_clipped 
 def get_bams_for_calling(wildcards):
     if wildcards.bqsr_round == "0":
-        subd = "mkdup"
+        subd = "downsample-4.0X/overlap_clipped"
     else:
         subd = "recal"
     return { 
