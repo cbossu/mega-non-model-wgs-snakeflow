@@ -1,3 +1,4 @@
+name: wget
 channels:
   - bioconda
   - conda-forge

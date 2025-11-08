@@ -1,0 +1,46 @@
+name: bioinf
+channels:
+  - bioconda
+  - conda-forge
+dependencies:
+  - _libgcc_mutex=0.1=conda_forge
+  - _openmp_mutex=4.5=2_gnu
+  - bamutil=1.0.15=h5ca1c30_6
+  - bcftools=1.21=h3a4d415_1
+  - bedtools=2.31.1=h13024bc_3
+  - bwa=0.7.18=h577a1d6_2
+  - bzip2=1.0.8=h7f98852_4
+  - c-ares=1.34.4=hb9d3cd8_0
+  - ca-certificates=2023.11.17=hbcca054_0
+  - gsl=2.7=he838d99_0
+  - htslib=1.21=h5efdd21_0
+  - keyutils=1.6.1=h166bdaf_0
+  - krb5=1.21.2=h659d440_0
+  - libblas=3.9.0=16_linux64_openblas
+  - libcblas=3.9.0=16_linux64_openblas
+  - libcurl=8.8.0=hca28451_0
+  - libdeflate=1.23=h4ddbbb0_0
+  - libedit=3.1.20191231=he28a2e2_2
+  - libev=4.33=h516909a_1
+  - libgcc=14.2.0=h77fa898_1
+  - libgcc-ng=14.2.0=h69a702a_1
+  - libgfortran-ng=12.2.0=h69a702a_19
+  - libgfortran5=12.2.0=h337968e_19
+  - libgomp=14.2.0=h77fa898_1
+  - liblzma=5.6.3=hb9d3cd8_1
+  - libnghttp2=1.64.0=h161d5f1_0
+  - libnsl=2.0.0=h7f98852_0
+  - libopenblas=0.3.21=pthreads_h78a6416_3
+  - libssh2=1.11.1=hf672d98_0
+  - libstdcxx=14.2.0=hc0a3c3a_1
+  - libstdcxx-ng=12.2.0=h46fd767_19
+  - libzlib=1.3.1=hb9d3cd8_2
+  - ncurses=6.5=he02047a_1
+  - openssl=3.4.0=hb9d3cd8_0
+  - perl=5.32.1=2_h7f98852_perl5
+  - plink=1.90b6.21=hec16e2b_3
+  - samtools=1.21=h96c455f_1
+  - xz=5.2.6=h166bdaf_0
+  - zlib=1.3.1=hb9d3cd8_2
+  - zstd=1.5.6=ha6fb4c9_0
+prefix: /projects/cbossu@colostate.edu/miniforge3/envs/bioinf

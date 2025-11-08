@@ -1,3 +1,4 @@
+name: bamutils_samtools
 channels:
   - bioconda
   - conda-forge

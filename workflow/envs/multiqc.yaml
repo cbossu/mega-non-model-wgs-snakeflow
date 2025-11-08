@@ -1,0 +1,4 @@
+name: multiqc
+channels:
+  - conda-forge
+prefix: /projects/cbossu@colostate.edu/software/anaconda/envs/multiqc

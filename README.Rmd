@@ -52,9 +52,10 @@ most clusters.  **There are some new requirements of the user, however!!**
        `config` directory and give the path to it in the `scatter_intervals_file:` line in
        your `config.yaml`.
 
-       
-    
+4. We now run snakemake 8.20.4 and we use the fork from https://github.com/cbossu/mega-non-model-wgs-snakeflow.git
 
+Rather than creating temporary conda environments and calling the yaml in each rule (which seems to be an issue for snakemake 8.20.4), before running snakemake we create named conda environments that we call those environments from each rule. We also create rules for snakemake wrappers so temporary rules are not created to avoid the potential errors.
+    
 
 ## Major Update/Upgrade Notes (Old)
 
@@ -142,14 +143,14 @@ tiny test data set it comes with on a single node
 (or across multiple nodes if you are on a SLURM cluster), these are the s you have to
 take. We assume that you already have `git` installed.
 
-1. Install Snakemake if you don't already have it.  I have been developing
-and testing this mostly on snakemake-6, but am not testing and using it with
+1. Install Snakemake if you don't already have it.  Eric  developed
+and testing this mostly on snakemake-6, used it with
 snakemake-7.7.0.  You must have a _full installation_ of snakemake, and you
 must have `mamba`.  To install snakemake so that this all works, follow the
 installation directions at
 [https://snakemake.readthedocs.io/en/stable/getting_started/installation.html](https://snakemake.readthedocs.io/en/stable/getting_started/installation.html).
 
-I have developed and tested this workflow using snakemake version 7.7.0.  The updgrade
+Eric developed and tested this workflow using snakemake version 7.7.0.  The updgrade
 to 7.8.0 introduces a lot of new snakemake behaviors that can be a little unexpected,
 so I will be sticking with 7.7.0 for a while.  Accordingly, you should create a
 snakemake environment with 7.7.0 to run this.  You can do that like this:
