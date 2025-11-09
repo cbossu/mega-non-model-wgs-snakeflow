@@ -93,6 +93,14 @@ main changes:
         the path to it in the `scatter_intervals_file:` line in your
         `config.yaml`.
 
+    4.   We now run snakemake 8.20.4 and we use the fork from  
+        https://github.com/cbossu/mega-non-model-wgs-snakeflow.git
+        Rather than creating temporary conda environments and calling the yaml 
+        in each rule (which seems to be an issue for snakemake 8.20.4), before 
+        running snakemake we create named conda environments that we call those 
+        environments from each rule. We also create rules for snakemake wrappers 
+        so temporary rules are not created to avoid the potential errors.
+
 ## Major Update/Upgrade Notes (Old)
 
 - I have now pulled the `bqsr-directory-sructure` branch into main. This
@@ -203,23 +211,23 @@ We assume that you already have `git` installed.
     at
     <https://snakemake.readthedocs.io/en/stable/getting_started/installation.html>.
 
-I have developed and tested this workflow using snakemake version 7.7.0.
-The updgrade to 7.8.0 introduces a lot of new snakemake behaviors that
-can be a little unexpected, so I will be sticking with 7.7.0 for a
-while. Accordingly, you should create a snakemake environment with 7.7.0
-to run this. You can do that like this:
+Eric developed and tested this workflow using snakemake version 7.7.0.  The updgrade
+to 7.8.0 introduces a lot of new snakemake behaviors that can be a little unexpected, 
+and the upgrade to snakemake 8 introduced even more. However, we worked out several bugs 
+and a lot of the newer wrappers work for snakemake 8. So we are installing 8.20.4 from here 
+on. The conda install automatically has a mamba backend. If you are in your base environment. 
+As long as you don't rely on temporary environments, the following tutorial should work.
 
-``` sh
-conda activate base
-mamba create -c conda-forge -c bioconda -n snakemake-7.7.0 snakemake=7.7.0
+```sh
+conda create -c conda-forge -c bioconda -c nodefaults -n snakemake snakemake=8.20.4
 ```
 
 2.  You must have cloned this repository. If you are savvy with this
     sort of thing, you might as well fork it then clone it. If not, the
     simplest way to clone it will be to use this command:
 
-``` sh
-git clone https://github.com/eriqande/mega-non-model-wgs-snakeflow.git
+```sh
+git clone https://github.com/cbossu/mega-non-model-wgs-snakeflow.git
 ```
 
 3.  When that is done, change into the repository directory, and
@@ -227,10 +235,11 @@ git clone https://github.com/eriqande/mega-non-model-wgs-snakeflow.git
 
 ``` sh
 cd mega-non-model-wgs-snakeflow/
-conda activate snakemake-7.7.0
+conda activate snakemake
 ```
 
-4.  The first thing we will do is a “dry-run” of the workflow. This
+4.  The first thing we will do, AFTER installing all conda environments in 
+    the workflow/envs folder, is a “dry-run” of the workflow. This
     tells you all the different steps that will be taken, but does not
     actually run them.
 
@@ -294,7 +303,9 @@ like this:
 
 5.  Do the run. But, for the first go-round only install the necessary
     software environments by using the `--conda-create-envs-only`
-    option:
+    option: **You can skip this step. You've already created the named conda environments, 
+    not the temporary environments this step would create. Actually now that the environments
+    are names, these aren't temporary
 
 ``` sh
 snakemake --cores 20 --use-conda  --conda-create-envs-only --configfile .test/config/config.yaml
