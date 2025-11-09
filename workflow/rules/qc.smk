@@ -46,7 +46,8 @@ rule multiqc_dir:
     resources:
         mem_mb = 36800
     wrapper:
-        "v3.5.1-2-g5f72db4/bio/multiqc"
+        "v7.9.0/bio/multiqc"      
+        #"v3.5.1-2-g5f72db4/bio/multiqc" #old snakemake wrapper-updated to the one above
 
 
 
