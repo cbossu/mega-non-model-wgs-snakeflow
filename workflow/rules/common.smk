@@ -186,7 +186,7 @@ def chromo_import_gdb_opts(wildcards):
 
 
 def scaff_group_import_gdb_opts(wildcards):
-        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/bqsr-round-{bq}/gdb_intervals/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(bq = wildcards.bqsr_round, sg = wildcards.scaff_group))
+        return(" --batch-size 50 --reader-threads 2 --genomicsdb-shared-posixfs-optimizations --intervals results/bqsr-round-{bq}/interval_lists/{sg}.list --merge-contigs-into-num-partitions 1  --genomicsdb-workspace-path ".format(bq = wildcards.bqsr_round, sg = wildcards.scaff_group))
 
 
 ## Here we get the -L option(s) for a chromosome or a scaff_group
@@ -253,7 +253,7 @@ def get_bams_for_calling(wildcards):
             bqsr_round = wildcards.bqsr_round,
             subd = subd,
             sample = wildcards.sample),
-        "bai": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bai".format(
+        "bai": "results/bqsr-round-{bqsr_round}/{subd}/{sample}.bam.bai".format(
             bqsr_round = wildcards.bqsr_round,
             subd = subd,
             sample = wildcards.sample)}
